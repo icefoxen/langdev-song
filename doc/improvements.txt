@@ -1,0 +1,91 @@
+Why use song instead of C or M3?
+
+Local functions
+First-class functions
+Multiple return values
+Auto dependancy generation (or at least good modules and/or SIMPLE build-tool a la m3makefiles)
+Parametric polymorphism
+Well-defined, flexible, portable types
+Safe arrays as well as dangerous pointers
+GC (how will this mesh with pointers???)
+Built-in compile-time decision making
+
+
+
+
+No address-of operation?  That could be done implicitly, and taking the address of say a stack value is invalid, so...  How does modula-3 handle this, a la reference parameters?  It does it like so:
+--- M3
+f : REF INTEGER;
+f^ := 10;
+(* Setting a direct address and doing arithmatic and so on is IMPOSSIBLE *)
+--- C
+int* f;
+f = &10;
+f = 10;
+f += 1;
+--- Song
+f ^int
+^f <- 10;
+f <- {^int} 10;
+
+f <-+ 1;     {- Should this be allowed???  Yes, but with some kind of escape necessary, maybe... -}
+f <-+ {^int} 1;  {- This maybe?  But it encourages adding arbitrary addresses together, which doesn't make sense. -}
+f <- {^int} (+ {int}f 1)  {- Most logical, but kinda silly -}
+---
+
+
+
+
+GOOD CASE:
+--- M3
+CASE IO.GetChar() OF
+| 'a'..'z' => IO.Put("Lowercase");
+| 'A'..'Z' => IO.Put("Uppercase");
+| '0'..'9' => IO.Put("Digit");
+| '!', '.', ':', ';', '?' => IO.Put("Punctuation");
+ELSE
+  IO.Put("Other")
+END
+---
+
+GOOD TYPECASE:
+--- M3
+VAR ref: REFANY;
+TYPECASE ref OF
+| NULL =>  (* ref is NIL *)
+| REF CHAR =>  (* ref is a pointer to a character *)
+| REF INTEGER(iref) =>  (* ref is a pointer to an integer, and
+                             iref gets bound to that pointer value *)
+ELSE
+  (* ref points to something else *)
+END;
+---
+
+
+
+
+***IMMEDIATE ISSUES:
+Do variables exist before they are declared?
+No address-of operation?
+Var decleration order...
+Array/record constructors...
+Get rid of alloc?
+newtype <: oldtype for casting instead of {newtype} oldtype?
+Where does the program start?  Main function?  Main module?
+
+
+
+Symbol object:
+Name, type, allocation type (global, const, new, static), default value, size, 
+
+
+
+Things I still want:
+Typecases/sets
+Some sort of OO framework
+String/sequence ranges?
+string.last, string.end pseudoproperties?
+Static closures
+Proper tail-recursion
+Returning and *dynamically generating* functions...?
+Parametric polymorphism.

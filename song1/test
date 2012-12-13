@@ -1,0 +1,4 @@
+#!/bin/sh
+./build
+./songpp.py testy.sg
+./songc testy.sg.pp

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+FILES="util.ml errorReport.ml songparse.mli songparse.ml songlex.ml lextest.ml"
+
+ocamlyacc -v *.mly
+ocamllex *.mll
+ocamlc -c $FILES

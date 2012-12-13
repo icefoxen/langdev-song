@@ -1,0 +1,76 @@
+end
+;;
+...
+<-
+<-+
+10
+0x10
+0b10
+0o10
+10.32
+-10
+'a'
+"b"
+<--
+<-*
+<-/
+<-%
+<-&
+<-|
+and
+or
+not
+xor
+<<
+>>
+inc
+dec
+==
+=
+/==
+/=
+<=
+>=
+<
+>
+module
+import
+use
+export
+global
+const
+protocol
+class
+type
+struct
+if
+elif
+else
+for
+do
+from
+to
+by
+while
+try
+with
+finally
+goto
+version
+def
+sizeof
+new
+alloc
+static
+free
+asm
+_bop
++ - * / %
+( ) [ ] { } 
+#boppity
+: ; , . @
+
+{- comment!  !!$#@##@$#@$#!@ -}
+// LINE comment!  $#@$#@^%$&^%&%$ 
+& | ! ~ ^
+"foobar\\ \n \t"

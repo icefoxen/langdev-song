@@ -1,0 +1,985 @@
+Song: A dangerous language for those who need to do dangerous things.
+
+WANTS:
+*optional GC (easy)
+*specific types (easy)
+*structs (easy)
+**Unions  (via protocols?)
+*typeclasses?  Protocols, really.  Requires somewhat strict typing to infer correctly... (solvable)
+**First-class functions (solvable)
+*Inner functions (solvable)
+*Static closures (tricky)
+*D-ish versioning (solvable)
+*Explicit pointers. (easy)
+*Parametric polymorphism?  Certainly sounds like a good idea. (solvable)
+*C interface extensions (easy)
+**Keyword/rest args.  A la ObjC/Smalltalk?  Hmm... (tricky)
+*Modules.  (solvable)
+*sizeof (easy)
+*goto's (easy)
+
+
+MAYBES:
+Associative arrays a la D?
+Ocaml-ish pattern-matching as opposed to switch/case?  How does it work?
+static closures?
+flexible manipulation-friendly syntax?  Lisp, Tcl, etc...
+
+
+ISSUES:
+Stack allocation: Atoms are allocated on the stack.  Compound values have to be dynamically allocated.  Deal with it.  This may change if it has to.
+
+
+
+in Bop;
+use Foo;
+import Bar;
+
+global foo int = 10;
+const bar str = "twenty";
+
+// Note implicit returns
+fact a uint : uint =
+   if a < 2 then
+      1;
+   else
+      a * (fact a - 1);
+   end
+end
+
+fib x uint : uint =
+   if x < 2 then
+      1;
+   else
+      (fib x - 1) + (fib x - 2);
+   ;;
+;;
+
+// Alt syntax???
+(def fib:uint (x:uint)
+   (if (< x 2)
+      1
+      (+ (fib (- x 1) (fib (- x 2))))))
+
+(def fact:uint (x:uint)
+   (if (< x 2)
+      1
+      (* x (fact (- x 1)))))
+
+
+
+protocol Eq @a =
+   eq @a, @a : bool;;
+   neq @a, @a : bool;;
+      // Allow you to define default methods that can be
+      // overridden later?  Perhaps.
+end
+
+struct color =
+   byte red;
+   byte green;
+   byte blue;
+end
+
+class Eq color =
+   eq a color, b color : bool =
+      a.red = b.red and a.green = b.green and a.blue = b.blue;
+   ;;
+
+   neq a color, b color : bool =
+      not eq( a, b );
+   ;;
+;;
+
+// So now any function that works on Eq works on colors.
+// Can Eq be extended?
+
+protocol Point @a
+   getX @a : int;;
+   getY @a : int;;
+   setX @a, int;;
+   setY @a, int;;
+   isAbove @a : bool;;
+   isLeftOf @a  : bool;;
+   moveTo @a, int, int;;
+end
+
+protocol ColoredPoint (Point) @a =
+   getColor @a : Color;;  // Color can be another typeclass if you want.
+   setColor @a, Color;;
+end
+
+// ...And so on.  Nice!  I like.  Especially since things can freely
+// be members of more than one typeclass, and it's dead easy to extend.
+// Well...  you can't ADD DATA.  Hmm.  Oh well, it's hardly a big issue 
+// right now.  It might be changed later.
+
+
+
+foobar =
+   ...
+   // # is a version marker
+   #Linux
+      ...
+   #Win32
+      ...
+   #SongCompiler
+      ...
+   #OtherCompiler
+      ...
+   ...
+;;
+
+
+// D-ish specificed functions?  "func" would be "func() int"...
+// I think that kind of safety could get rather irritating and/or error-
+// prone with an explicitly typed language.  So no.
+// Closures, anyway
+makeSeq n int : func =
+   f : int =
+      inc n;
+   ;;
+   f;
+;;
+
+a func <- (makeSeq 10);
+(a)   --> 11
+(a)   --> 12
+...
+
+
+
+// Alt Smalltalkish syntax...
+fib :n uint (uint) =
+   if n < 2:
+      1;
+   else:
+      (fib :n - 1) + (fib :n - 2);
+
+// Actually, this works fairly well, 'twould seem...
+// GAH.  We need type tags.  So it becomes a bit messier...
+copyArray from:a [@a] to:b [@a] (int):
+   x int = (max :a.len :b.len);
+   from n = 0 to x:
+      b[n] <- a[n];
+   x;
+   
+(copyArray from: foo to: bar)
+// So this would be referred to as copyArray:from:to
+// You could also have copyArray:from:to:sortBy and so on.
+// What if you write (copyArray to:bar from:foo)?  Would that resolve to the
+// same function?  It had better...  But then how do we know?  Hah, the
+// labels are stored alphabetically, so it would always internally be
+// copyArray:from:to, or doFoobar:a:b even if it's defined and used as
+// doFooBar:b:a.  Hmmm...  Nifty.
+
+// That solves labelled args fairly elegantly, which is good.
+// How 'bout varargs?  An array of NONE references.
+format :stream stream :string str :x ... (uint) =
+   ...
+
+// Hmm.  Might work.  And now I'm having second thoughts about the labelled
+// vars, mainly because you now HAVE to put them, and it's easy to make them
+// quite long...
+
+// Well.  We can always leave that aspect for now; consider the keywords
+// mere syntactic sugar until later.  Hmm.
+// Nah, screw it.  Lisp/C-ish.
+// Now, cut the indent-delimiting.
+// That might make it easier to have statements ended by lines, actually.  Hmm.
+// Eh, that's weird anyway.  Leave it with semicolons.
+
+
+fib n uint : uint =
+   if n < 2 then
+      1;
+   else
+      (fib n - 1) + (fib n - 2);
+   ;;   // the "end" keyword can probably be substituted here
+;;      // but a ;; is way faster to type.
+
+copyArray a [@a], b [@a] : int =
+   x int = (max a.len, b.len);
+   from n = 0 to x do
+      b[n] <- a[n];
+   ;;
+   x;
+;;
+
+
+// Ooooh.  Hmmm.  Can you return tuples?  That might be... fun...
+// And then you can just use an assignment statement to parse it...
+// This could be rather cool, actually.
+div n int, m int (int, uint) =
+   (n / m), (n % m);
+;;
+
+foo:
+   n uint, m int <- (div 25, 10);
+   (printf "25/10 is %d with %d left over\n", n, m);
+;;
+
+// You can ignore things with _.
+bar:
+   n uint, _ <- (div 25, 10);
+   ...
+;;
+
+
+// Varlength args...
+// toRest is a [[NONE]]
+cloneArray from [@a], to [@a], toRest ... : uint =
+   mx uint <- (max from.len to.len);
+   from x = 0 to toRest.len do
+      if toRest[x].len < mx then
+         mx <- toRest[x].len;
+      ;;
+   ;;
+   
+   from x = 0 to mx do
+      to[x] <- from[x];
+      from y = 0 to toRest.len do
+         toRest[y][x] <- to[x];
+      ;;
+   ;;
+   
+   mx;
+;;
+
+// Range or iterator objects, a la Ruby?  Hmm.  This ain't Ruby.  Nah.
+
+// Functions CAN be overloaded via typeclasses!
+// What about overloading operators, then?  Hmm.
+
+// Nested functions, static closures, 
+
+// What about telling (alloc) and (new) what kind of thing to allocate?  Yeek.
+// Hrm.  Handle it in the language itself.
+makeArrayCopy a [@a] : [@a] =
+   x [@a] <- new [@a]( a.len );
+   b foo <- new foo();   // Default constructors, hah!  I like!  I like!
+   for n = 0 to a.len do
+      x[n] <- a[n];
+   ;;
+   x;
+;;
+
+
+// Have C-ish "switch" statements, at least, if nothing more fancy.  
+// EXPLICIT  fallthrough though!
+
+
+// Array slices?  Hmm.
+
+// Enums?  Hmm.
+
+
+INTRODUCTION
+Song is a medium-level systems language aimed to about the same tasks that C was (originally) designed for: operating systems, device drivers, low-level libraries, and other such tasks.  It is not intended for high-level programming, scripting, etc.  Thus, Song has several "dangerous" features such as direct pointers, (optional) manual control over memory allocation, and inlined assembly.  It's a dangerous language; fine, sometimes one needs to do dangerous things.  Python and Objective Caml and Common Lisp and so on are wonderful languages, but I have yet to see an operating system written in them.
+
+Song compiles directly to native assembly language, and has several improvements over C such as a more powerful type system, less dependance on pointers, optional garbage collection, a real module system, and several higher-level features.
+
+Don't talk to me about C++.  It solves none of C's problems and adds a lot more.  Objective C is pretty good, but somewhat unwieldy at times.
+It's called Song because.
+
+
+LEXICAL CONVENTIONS
+Identifiers include characters a-Z, 0-9, and underscore.  An identifier may not start with a number.  Some special system identifiers start with an underscore, so be careful when using them.
+Identifiers are seperated by whitespace.  Whitespace counts as spaces, tabs, or newlines.
+
+Line comments either start with // and continue to the end of the line.  Block comments begin with {- and end with -}.  They may be nested.  Comments count as whitespace.  1{- foo -}2 is 1 2, not 12.
+
+The following are reserved words and symbols:
++ - / * % inc dec
+( ) : , ; ;; end @ # [ ] ... _ { } .
+and or not xor & | ! ^ ~ << >>
+= /= == /==
+<- <-+ <-- <-* <-/ <-% <-& <-|
+' "
+if then elif else for from do while
+in use import export
+global const
+protocol typeclass struct
+
+Note that there are two possible symbols to end blocks: ";;" and "end".  They are completely identical.  ;; is just faster to type.
+
+
+VALUES AND TYPES
+Song is strongly typed.  The following types are built-in:
+int8
+uint8 (unsigned int)
+int16
+uint16
+int32
+uint32
+int64
+uint64
+float32
+float64
+func
+
+The number suffix denotes the number of bits the type uses.  A "u" prefix denotes that it is an unsigned integer.  These exist to make it utterly clear what exact type you are using, no matter what compiler or platform.  These types can be altered/extended if special values MUST be included, ie int128 and uint128 types for use on 64-bit platforms.
+
+However, these are often unwieldy for everyday usage, since one often does not really care how big an int is as long as it's "big enough".  So, the following aliases exist, and should be set to whatever is a reasonable value for the platform.  The values given here are, for example, for the x86 processor.
+bool    (int8)
+char    (uint8 or uint16 or uint32, depending on how much you care about Unicode (XXX: Decide for certain and make it language-wide.))
+byte    (uint8)
+short   (int16)
+ushort  (uint16)
+int     (int32)
+uint    (uint32)
+long    (int64)
+ulong   (uint64)
+float   (float32)
+double  (float64)
+str     ([char] --Array of char)
+
+This allows the programmer to specify exactly what size number is necessary, WHEN it is necessary, and not really care about it the rest of the time.
+
+There is also the NONE type, which is roughly equivilant to C's *void.  It is a pointer to anything, anywhere.  It can be set to any value, whether it makes sense or not, and anything can be coerced to and from it.  It lets you break the type system completely.  Handle with care.
+
+Numbers can be specified in a variety of ways.  The default is decimal.  Numbers beginning with 0x, for example 0x91, are hexadecimal.  Numbers starting with 0o are octal, a la 0o77.  Numbers starting in 0b are binary; 0b1011.
+
+Any number with a period in it is considered a floating point number, for example, 1 is an integer, 1.0 is a float.  
+XXX: At the moment there are no C-ish number-suffexes, such as 1.0f or 1234567890L.  These may happen later.
+
+There is also a value NIL which is basically a null pointer.  Pointers and structures are automatically initialized to NIL.  NIL is of type NONE, and can be assigned and passed to functions and so on, but trying to actually do anything to it is a runtime error.
+
+ POLYMORPHISM
+Song has facilities for parametric polymorphism.  Readers who are familiar with Haskell, ML or Eiffel will know what this is.  Basically, it allows one to design functions to manipulate a value without necessarily knowing what it is at compile-time.  The classic example is a linked list: in C, if you want to make a reusable linked list, you must cast each object to a *void before putting it in, and re-cast it to it's original type when you remove it.  This is error-prone.  Song lets you specify that a linked list contains an object of type @a, and then it decides what type @a is later.  This is similar in function, but not in principle, to some features of C++'s templates.
+
+For example:
+// A generic list node
+struct @a List =
+   item @a;
+   next @a List;
+;;
+
+// A generic insert funciton: takes a list and an item, returns a new
+// list with the item attached.
+insert lst @a List, itm @a : @a List =
+   // Returning is implicit.
+   new List itm, lst ;   // Constructor; these come later.
+;;
+
+get lst @a List, index int : @a =
+   if index = 0 then
+      lst.item;
+   elif lst.next = NIL then
+      raise Exception ...  // Signal an error!
+   else
+      (get lst.next, index - 1);
+   ;;
+;;
+
+List foo = new int List;
+(add foo, 10);
+(add foo, 20);
+(add foo, 30);
+(add foo, "40");  // Compile-time error.
+(get foo, 0);  // Returns 30
+(get foo, 2);  // Returns 10
+
+Song also has an object system using typeclasses; Haskell programmers will find this familiar.  More information on it will happen in chapter XXX.
+
+ ARRAYS
+Song arrays are basically continguous chunks of memory.  However, they ARE BOUNDS-CHECKED, unlike C arrays.  If you do not want bounds-checking, use pointers.  The maximum size of an array should probably be the size of the platform's address space; for x86 computers, this means a 32-bit counter.  Basically, they shouldn't impose arbitrary limits.
+
+Arrays are specified by wrapping the type name in []'s, for instance, [int] or [char].  Multidimensional arrays are just wrapped multiple times, for instance a two-dimensional array of floats would be [[float]].
+
+Arrays are accessed like C, in the form of var[index], where var is the array's variable and index is a integer.  Array slices do not exist so far, but may in future versions (ie if enough people think they're a good idea).  Negative array indices count from the end of the array, so var[-1] would get var's last item.  Either that or be a runtime error...  Array access wrapping around would make some things easier, and make other things much harder to check.  Hmm.
+
+You can also define an array's contents at compile-time.
+foo [int] <- [10, 20, 30, 40, 50];
+
+
+
+ STRUCTS
+Structs are rather similar to C.  Each struct defines a new type name.  Structs may be recursive.  They are defined thus:
+struct Date =
+   day byte;
+   month byte;
+   year int;
+;;
+
+The above code defines a type "Date" with the fields day, month and year.  You can also define default values:
+struct Date =
+   day byte <- 0;
+   month byte <- 1;
+   year int <- 2000;
+;;
+
+A new structure's fields are then set to the default values by the constructor whenever a new structure is allocated.  More on constructors later.  If no default values are provided, then numbers are set to 0, and pointers and references are set to NIL.
+
+You access a struct's field just like C/Java, pretty much.
+setTodaysDate d Date =
+   day byte, month byte, year byte <- (getTodaysDate);
+   d.day <- day;
+   d.month <- month;
+   d.year <- year;
+;;
+
+Arrays and structs being passed to and from functions are passed by REFERENCE.  Pointers and numbers are passed by VALUE.
+
+
+ POINTERS
+A pointer is a low-level reference to a chunk of memory, hopefully one containing a valid objeect.  A pointer is declared thus:
+f ^byte <- &10;
+
+^ declares a type a pointer, unary & gets the address of an object.  You can allocate many objects, making a C-ish array, like this:
+p ^int <- &(new int 64);
+
+The above code makes a 64-element array of integers, which HAS NO BOUNDS CHECKING.  This makes it faster than normal arrays, and also much more dangerous, because things like buffer overruns can happen.  You dereference a pointer thus:
+a int <- ^p;
+
+If the pointer points to an array, you can do pointer arithmatic:
+a <- ^(p + 5);   // Get the 6th element of the array
+a <- ^(p + 64);  // Get the 65th element of an array, which
+                 // either returns invalid data or causes a segfault.
+Also note that unlike arrays, where arr[-1] accesses the last item of the array, ^(ptr - 1) does NOT access the last item of a pointer arrays.  If ptr aims at the start of the array, it will in fact underrun into an undefined bit of memory, and potentially do horrible things to you.
+
+You can do arbitrary conversions between pointers and numbers.  You'd have to be crazy to do anything beyond the simple pointer arithmatic shown above, but it can be done.
+a ^int <- &50;
+b int <- a;  // You are getting the ADDRESS of the value here!
+a <- b * 5 + 3;
+^a;          // You could get just about anything here...
+
+An uninitialized pointer ALWAYS points to NIL.  Dereferencing a nil pointer SHOULD throw an exception instead of just segfaulting.
+
+Basically...  Do not use pointers unless you have a damn good reason.  Structures and arrays and other non-atomic objects are normally passed by reference, which is exactly like using pointers except the compiler takes care of all the work for you.  The only reason pointers exist in the language is because Song is intended to write things like operating systems and device drivers, for which pointers are often utterly necessary.
+
+Note that a NONE pointer, ^NONE, is amazingly unsafe, both from a programming view and a security view.  You have utterly no way of knowing what it'll be aiming at.  Please don't use them.
+
+ COERCION
+Coercion has to be explicit when converting larger to smaller types, or when moving signed to unsigned or vice versa.  The syntax for coercion is thus:
+f int <- 19;
+j short <- {short} f;
+k byte <- {byte} j;
+f <- k;  // f is a bigger type than k, so no decleration needed.
+
+Note that a large number will be TRUNCATED when coerced to a smaller one.  Also note that when a small number is coerced to a large one, sign extension will be performed only if BOTH numbers are signed.  Otherwise the result is merely truncated or expanded with 0's.  Coercing a signed number to an unsigned one and vice versa is somewhat dangerous, as if the number is large enough the sign can suddenly change.  For example (on a twos-compliment machine):
+a uint8 <- 255
+b int8 <- {int8} a;
+(printInt b);  // Prints "-127"
+
+
+ FUNCTIONS
+Functions are first-class objects, which have type "func".  Unlike D, the function's type carries NO information on what arguments and return types the function has.  The compiler's type-checker may be able to infer enough info to figure it out anyway, but don't count on it.  Just be careful.
+
+
+STATEMENTS
+A Song program is just a sequence of statements.  It starts at the "main" function, and ends either when main returns or when an exit function is explicitly called.
+
+ ASSIGNMENT
+Destructive assignment occurs by using the <- operator.  Pretty simple stuff.  I don't use = because of mixing it up with equality, and I don't use := because I think it looks ugly.
+
+There are also operators for doing assignment with addition, subtraction, multiplication, etc.
+a <-+ b;   // a <- a + b
+a <-- b;   // a <- a - b
+a <-* b;   // a <- a * b
+a <-/ b;   // a <- a / b
+a <-% b;   // a <- a % b
+a <-& b;   // a <- a & b
+a <-| b;   // a <- a | b
+
+Arrays and structs being passed to and from functions are passed by REFERENCE.  Pointers and numbers are passed by VALUE.  This means that any change you make to a struct or array inside a function will be visible out of it.
+ 
+ FUNCTION DEFINITION
+A function definition has the following form:
+name [(arg type) [, (arg type)*]] [: rettype (, rettype)*] =
+   (statements)*
+;;
+
+If a return type is not specified, then the function returns nothing, and trying to use the result of it for something is a compile-time error.  Functions CAN RETURN MULTIPLE VALUES, which will be explained in more detail later.  
+
+Functions can be nested.  The inner function is only visible to the outer one.  Functions can also be returned.  If a function is returned from another function, it is a STATIC CLOSURE, just like the ones we know and love from functional languages such as Lisp, Haskell and ML.  Static closures are a high-level object though, and REQUIRE a working garbage collector.  Therefore, don't use them if you want GC-less code.
+
+You can also write anonymous functions thus:
+func (arg type)* : rettype = ... ;;
+This create an anonymous function and returns it.  So you can do:
+
+f func <- func a Foo, b Foo : bool = a > b end;
+(someFunctionThatTakesAFuncParameter f);
+
+  RETURNING MULTIPLE VALUES
+If you are familiar with returning a tuple in languages such as Python or ML, well, Song has no tuples, but the semantics are similar.
+
+Functions can return multiple values thus:
+divmod x int, y int : int, int =
+   (x / y), (x % y);
+;;
+
+You can then assign these values to variables like this:
+int a;
+int b;
+a, b <- (divmod 25, 10);  // a will contain 2, b will contain 5.
+
+However, you MUST specify variables for all the values returned.  If you do not need a value, replace it's variable with an underscore to ignore it.  For instance:
+int b;
+_, b <- (divmod 25, 10);  // b will contain 5.
+
+That's about all for now.
+  
+ WHILE/FOR/FROM STATEMENTS
+There are three main looping constructs in Song: while loops, for loops, and from loops.  Note that Song compilers should optimize tail-recursion, as well.
+
+While loops are very simple.  As long as a condition is true, the body is executed over and over.
+while condition do
+   body
+;;
+
+For loops are equally simple, for anyone who knows C, C++, Java, or anything else in that family of languages.  They take three statements: an initializer, a condition, and an increment.
+for initializer; condition; increment; do
+   body
+;;
+
+From loops are just syntactic sugar for "for" loops.  They take an initializer, an end value, and optionally an increment.
+from initializer to endvalue [by increment] do
+   body
+;;
+
+Since from loops are the only thing here that could possibly be unfamiliar, and since they have a bit of slightly weird syntax, let's go over them a bit.
+The following two loops are equivilant:
+
+for x int <- 0; x /= arr.len; inc x do
+   (doSomethingWith arr[x]);
+;;
+
+from x <- 0 to arr.len do
+   (doSomethingWith arr[x]);
+;;
+
+Note a couple things: First, the given variable is always assumed to be an int.  If you don't want an int, use a for loop.  Second, the default increment is always "varname <-+ 1".  You can do different values too though.
+
+for x int <- arr.len - 1; x /= -1; dec x do
+   ...
+;;
+is identical to
+from x <- arr.len - 1 to -1 by -1 do
+   ...
+;;
+
+So, in the most general form, it's this:
+
+for var int <- init; var /= val; var <- var + count do ... ;;
+from var <- init to val by count do ... ;;
+
+
+XXX: The condition for "from" loops checks whether var is EQUAL to val.  This is address equality; if two things have the same address, they're equal.  This can cause errors or fencepost miscalculations; note that in the example just above, we count down to -1, not 0.  Deal.  And tell me if you have a better way around it.
+
+
+ CONTROL STRUCTURES
+Returning a value in Song is very easy: a function simply returns the last value evaluated.  However, sometimes we want to return from a function prematurely.  For this we have the "ret" statement, which immediately returns from a function.  For example
+findIndex a str, b char : uint =
+   from x <- 0 to str.len do
+      if a[x] = b then
+         ret x;
+      ;;
+   ;;
+   
+   raise NotFoundException ...;
+;;
+
+There are also the "break" and "continue" statements, which do exactly the same as in C: break out of the topmost loop, and immediately start the next iteration of the loop.
+
+Note that switch statements are NOT C-like.  In other words, THE DEFAULT ACTION IS *NOT* TO FALL THROUGH TO THE NEXT CASE.  To do this you must use the "fallthrough" statement.
+
+switch foo =
+   case 1 =
+      (doSomething);
+   case 2 =
+      (doSomethingElse);
+      fallthrough;
+   case 3 =
+      (doMoreStuff);
+   default =
+      ...
+;;
+
+
+ TYPEDEFS
+A typedef simply lets you make an alias to a type.
+
+XXX: I have not yet decided whether to make them strongly or weakly typed.  C and D solve this differently...  Strongly typed could get annoying, but it could also save a lot of heartache somewhere.
+
+
+ STRUCTS
+Structs are more or less like C, except that they also implicitly define types.  A struct is easy to define:
+struct intBinTree =
+   item int;
+   left intBinTree;
+   right intBinTree;
+;;
+
+As demonstrated in the chapter on polymorphism, structs can have different types.
+struct @a binTree =
+   item @a;
+   left @a binTree;
+   right @a binTree;
+;;
+
+  CONSTRUCTORS
+A constructor is a special function that is automatically created to initialize a struct for you.  It can be called with no arguments to initialize values to their default, or with the same number of arguments as the struct to initialize it to the given values.  A constructor for struct Foo is invoked by the syntax
+f Foo <- new Foo ... ;
+
+or
+f Foo <- alloc Foo ... ;
+
+"new" invokes the "_new" function which allocates a new chunk of garbage-collected memory.  "alloc" invokes "_alloc", which returns non-garbage collected memory.  When you're done with a structure, free it thus:
+free f;
+
+This should have NO EFFECT on structures in garbage-collected memory.
+Note: Unless you're writing an operating system or memory manager or some other very low-level system, don't bother using alloc.  It's only there because sometimes you really do need it.
+
+There is a third constructor, "static".  This allocates space for an object without running an allocator.  This means it's allocated on the stack if it's a local variable, or in the program's data segment if it's a global.  Constants are all static by definition, no matter what type of constructor you use.  Like "alloc", this is provided because it is sometimes necessary, not because I like it.  Note that it is a COMPILE TIME ERROR to return a static value!  Given how well garbage collectors work, I would NOT advise bothering with this one much, except possibly for global values.
+  
+ IF/ELIF/ELSE AND SWITCH
+Nothing to really see here.
+
+if ... then
+   ...
+elif ... then
+   ...
+else
+   ...
+;;
+
+Note that "case" expressions can only be variables, integers or characters.  No mathematical expressions or such.
+switch ... =
+   case 1 =
+      ...
+   case 2 =
+      ...
+      fallthrough;
+   case 3 =
+      ...
+   default =
+      ...
+;;;
+
+ PROTOCOLS/TYPECLASSES
+Ah, now we get into the interesting bits.  Song's object system isn't like that of most languages ye might know, C++ or Java.  I lifted it mostly from Haskell, because it's simple and I rather like it.
+
+First, let it be known that the definition of object-oriented programming is rather ill-defined.  The definition I use is that an object system's task is to define new types and sets of operations on them, and to make it possible to treat types as being more or less specific.  OO systems generally do this through an inheritance tree: a class is more specific than it's superclass, and less specific than it's subclasses.  So any operation defined for a certain class is also applicable to it's subclasses, which means that any class can be treated as if it were it's superclass.  This makes life flexible, and generally nice.
+
+Now that the theory is out of the way, this is how Song does it.  The basic unit is the protocol, which defines an interface to implement.  It defines no data or actual functions, just tells you what functions should exist.  Protocols may inherit other protocols, though each may only have one parent.  No multiple inheritance.
+
+Now, to actually use a protocol, you define a typeclass.  This is the implementation of a protocol for a certain type.  So if you had a "Point" protocol, you could define a struct "myPoint" and write a typeclass that implements the protcol using it.  So then, "myPoint" would have TWO types: "myPoint" and "Point".  It could be passed to any function that requires a "Point" type, and the compiler would call the functions appropriate to the struct.  This means that any single struct can implement many typeclasses.  The function names of different typeclasses can even overlap, as they will be differentiated by their signatures.  The Point protocol's "create" function isn't the same as, say, the Square protocol's.  The compiler knows which to use, because a function knows what type it's expecting.
+
+So:
+
+struct myPoint =
+   x int;
+   y int;
+end
+
+protocol Point =
+   create int, int : Point;;
+   getX Point : int;;
+   getY Point : int;;
+   setX Point, int;;
+   setY Point, int;;
+   isAbove Point, Point : bool;;
+   isLeftOf Point, Point : bool;;
+   moveTo Point, int, int;;
+end
+
+class myPoint (Point) =
+   create x int, y int : Point =
+      new myPoint x y;
+   end
+   
+   getX p Point : int =
+      p.x;
+   end
+   
+   getY p Point : int =
+      p.y;
+   end
+   
+   setX p Point, x int =
+      p.x <- x;
+   end
+   
+   setY p Point, y int =
+      p.y <- y;
+   end
+   
+   isAbove p1 Point, p2 Point : bool =
+      p1.y > p2.y;
+   end
+   
+   isLeftOf p1 Point, p2 Point : bool =
+      p1.x > p2.x;
+   end
+   
+   moveTo p Point, x int, y int =
+      p.x <- x;
+      p.y <- y;
+   end
+end
+
+
+Protocols can also be polymorphic.  For example:
+protocol @a Set =
+   exists @a Set, @a : bool;;
+   add @a Set, @a;;
+   remove @a Set, @a;;
+end
+
+ 
+ EXCEPTIONS
+Exceptions are pretty much like Java, 'cept you don't have
+to declare what exceptions a function throws.  Exception paths and such are resolved AT RUNTIME, though this may change later.
+
+The syntax of an exception block is try ... catch ... end, try ... finally ... end, or try ... catch ... finally ... end.  Of course, ;; may be substituted for end.  The finally blocks are ALWAYS executed if the try block is executed.  If, for instance, the an exception statement is wrapped up in "if false then ...", then the finally statement is NOT executed.  The effects of an exception being thrown in a finally block are UNDEFINED at this time.
+
+doStuff =
+   try
+      (somethingThatThrowsAnException);
+   catch ExceptionOfThisType
+      (doSomeErrorRecovery);
+   finally
+      (cleanUp);
+   end
+;;
+
+throwSomething =
+   throw new Exception;
+;;
+
+There is an "Exception" protocol that defines what operations a new exception type have to do.  This allows flexibility and extension.  However, the protocol is currently undefined; it will be defined once I figure out what it has to do.
+
+The way exceptions are compiled is thus:
+The entrance of each exception block is compiled to call the function _registerHandler.  This creates a structure, call it ExceptionFrame, with type information, a stack pointer, the address of the catch block, and the address of the finally block.  The ExceptionFrame is then pushed onto the exception stack, and the code in the try block is executed.
+
+Then, when an exception is thrown, it calls the function _throwException.  This function walks down the exception stack until it finds an ExceptionFrame with a compatable type.  It then jumps the location of the catch block, adjusts the stack pointer and the exception stack, and executes the catch block.  The finally block is then executed, even if another exception is thrown in the catch block.  
+
+ VERSION DIRECTIVES
+These are compile-time directives similar in function (though not in principle) to C's #ifdef's.  In function, it's much more like D.  Here, check this out:
+
+#version Win9x do
+   ...
+;;
+#version WinNT do
+   ...
+;;
+#version Linux do
+   ...
+;;
+
+This means that only one of the above blocks will be compiled, depending on which OS it's compiled on.  You can define version directives, which are any string, thus:
+
+#def Foo
+
+UNLIKE C's preprocessor, version directives are global over the WHOLE project.  All the necessary source and interface files are read, any version declerations are stuck into a flat namespace, and all directives are checked against that namespace at once.  You do not have to worry about one directive clobbering another or being overridden or removed.  Also, these are NOT macros or any other kind of syntactic element; all directives exist in a namespace utterly seperate from any variables, functions, etc.
+
+XXX: See how D does it again!
+
+
+ ASM
+The "asm" statement does inline assembly.  This is platform-dependant, obviously, and possibly compiler-dependant, though there should really be one standard per platform/processor.  I really don't know enough about designing assembly languages to say more than that right now.
+
+Also, there is currently no interface for passing variables to and from assembly code.  There will be someday.  Again, I don't know enough about it right now.
+
+ SIZEOF
+This is pretty simple.  It's just like C: it returns the size of the argument variable or type in bytes.  Thus:
+
+foo int32;
+(sizeof foo);   // Returns 4
+bar [int8] <- new [int8]( 100 );
+(sizeof bar);   // Returns 104; 100 bytes, + 4 index bytes for array
+
+bop int16;
+(sizeof bop)    // Returns 2
+beep ^int16;
+(sizeof beep);  // Returns 4 or 8, depending on platform pointer size
+(sizeof ^beep); // Returns 2
+
+ STRINGS AND CHARS
+A Song string is any sequence of characters delimited by "'s.  They may contain escape sequences \t, \n, \r, \b, and so on, or \number, where number is any number in any format.
+
+Song uses characters that are either UTF-8, UTF-16, or UTF-32.  I suspect I am going to allow this to be implementation dependant, however much I hate to do so, simply because there is no true advantage of one over the others.
+
+...Eh, hell with it.  All Song characters are encoded in UTF-16.  If you need raw ASCII, it's easy enough to write conversion routines to turn strings into a [byte].
+
+XXX:
+There MIGHT OR MIGHT NOT be a built-in string concatenation operator.  Arguments for it are cleanness of use.  Arguments against are hardness of converting arbitrary values to strings (having a Printable protocol would help), and more tellingly, the issue of GC.  
+
+
+EXPRESSIONS
+Okay, the difference between statements and expressions isn't terribly well defined.  It's supposed to be that an expression is anything that returns a value, but, well, given the implicit returning of values, even things like for loops and if statements are expressions, rather reminiscent of more functional languages like Haskell and ML.  I really didn't realize this at the time, but I don't want to rewrite this whole spec.  Deal.
+
+ ARITHMATIC
+Arithmatic is just like C.  +, -, *, /, and % for integer modulo.
+
+XXX:
+Should int->float conversions ROUND instead of truncating, like Ada?
+
+ RELATION
+Again, mostly like C.  <, <=, >, >=, =, /=.  Note that = is comparison, NOT ==.  Also note /= instead of !=.  Also note that = and /= do comparison by address, not content.  There are two other operators, == and /==, that compare object by content.  For numbers, this means converting them to the same representation, then comparing them.  For more complex objects, it goes through them byte by byte and finds out whether they're identical.
+
+Note that <, <=, >, >=, == and /== can be OVERLOADED by use of the protocol "Comp".  It looks like this:
+
+protocol @a Comp =
+   lt  @a, @a : bool;;
+   lte @a, @a : bool;;
+   gt  @a, @a : bool;;
+   gte @a, @a : bool;;
+   eq  @a, @a : bool;;
+   neq @a, @a : bool;;
+;;
+
+If both sides of a comparison expression are of type Comp, the appropriate function is called.  Otherwise, numerical/pointer comparison is performed.
+
+Note that overloading operators like this is easy to abuse, and should only be done with caution.
+
+
+ LOGIC
+The language defines a bool type and two boolean values: true and false.  These are simply 1 and 0, respectively, and a bool is simply a small signed integer.  Any non-0 value is true.  NIL is false.
+
+The logical operators and, or, not, and xor exist.  Evaluation is short-circuit; if you write "a and b" and a is false, b is NOT evaluated.
+
+
+ BINARY OPERATIONS
+These are just like C.  & is binary and, | is binary or, ! is binary not, ^ is binary xor, ~ is binary compliment (a & ~a evaluates to 0), << is shift-left, >> is shift-right.  These operators have nothing to do with logic, and thus do NOT short-circuit evaluate.  That's all, folks.
+
+ PRECEDENCE
+This works about how one would expect, hopefully:
+(highest)
+() []
+new alloc static free
+! - (unary minus) ^ & (address) {cast} inc dec
+* / %
++ -
+< <= >= >
+= /=
+== /==
+~
+& | ^
+not
+and or xor
+<- <-...
+(lowest)
+
+ FUNCTION CALLS
+Function calls should have the form (func arg1, arg2, ...)
+In practice though, this tends to conflict with precedence rules stating that () can surround an expression; it creates silly things like ((func arg1, arg2, ...)) being a function call.  So, maybe we can just have the base function call be func arg1, arg2, ... like ML, and only require parens where things would otherwise be ambiguous.  That might work, actually...  Wait, what about function calls with no args then?  What would differentiate between calling the function and returning it?  The comma?  So then a funcall with no args would be "func,;", which could be better, but could be worse.  Yeah, let's leave it at that for the moment...
+
+ LOCAL FUNCTIONS
+Functions can be defined within functions.  They have access to all the outer function's local variables and arguments and such.  This can be handy.
+
+Now, and this is a bit tricksy (fun though!), local functions CAN be returned.  If it is, and it accesses local variables it doesn't define, then what the compiler does is this: it allocates a chunk of GC'ed memory on the heap, sticks the variables in those, and adjusts things in the appropriate functions to point to them.  This is a static closure, a la Lisp or ML.  For instance, in Scheme you can write this:
+(define foo (x)
+   (lambda (y) (+ x y)))
+(define a (foo 10))
+(define b (foo 20))
+(a 20)  ==> 30
+(b 20)  ==> 40
+
+What happens here is you define a function foo that creates an anonymous function that accesses foo's argument x, takes it's own argument y, and adds them together.  It then calls foo with 10 and assigns the resulting function to a.  This means a still has access to the 10 that was passed to foo, even though foo has returned.  Now, to do the same thing in Song, you would do this:
+
+foo x int : func =
+   func y int : int = x + y end
+;;
+
+a func <- foo 10;
+b func <- foo 20;
+a 20;   ==> 30
+b 20;   ==> 40
+
+So the variable x, which would normally be allocate on the stack, is allocated on the GC'ed heap with each call of foo.  Call this a stack frame (even though it's not on the stack).  Since it's on the heap, it survives after foo exits instead of dissapearing.  So really, instead of just returning a function pointer, foo returns a closure object, which is a pair of pointers: one to the function to be called, and one to it's stack frame.  When a is actually called, a pointer to the stack frame is pushed, and the function is then jumped to.
+
+Now, all this nifty trickery REQUIRES that the garbage collector be operational.  Y'see, each stack frame has to be allocated on the heap, and so does the closure object.  Now, when the closure object dissapears and you're done with it, then you can free the stack frame, right?  Well, what if more than one closure was returned?  It's certainly possible.  For all you know, a function may build an array of closures and return that, and those closures may return more closures, and you could have stack frames pointing to each other scattered all throughout your memory.  And if one of them dissapears or gets freed and overwritten when it shouldn't be, some function somewhere may mysteriously screw up, and you'll never be able to figure out exactly what went wrong.  So if you want to try to figure out some way of doing all this without a GC, be my guest.
+
+
+MODULES
+Song has a module system.  It's fairly simple right now, and only supports a flat namespace of modules.  Each module is made of two parts: the interface file (*.si), which is like a C header in purpose but quite different in implementation, and a definition file (*.sd), which is basically a library/object file.
+
+In later versions, it may be possible to have these two parts combined into a single file for simplicity.  However, right now it'd just make things more complex, and slightly less flexible.
+
+Anyway.  The interface file contains function signatures, constant definitions, version declerations, other module declerations, protocol and class definitions, and just about everything else except actual code.  Like C header files, they tell the compiler what the definition file contains, so it can do type-checking and everything.
+
+It may also be possible to have a module that consists of a directory containing many interface and definition files.  This may be done to speed compilation, or to seperate logical componants, or to test a module while it's still being built.
+
+The compiler automatically checks and finds out what modules are needed to compile a program.  It does this by looking at the program and seeing what modules it imports, then looking at those module definitions and seeing what THOSE import, and so on.  To find a module, first it searches in the current directory to look for files of the appropriate name.  If it finds appropriate source files, it does make(1)-type timestamp checking and compiles them.  Then it looks for the modules in whatever system-defined locations there may be (for instance, /usr/lib/song or whatever).  Other directories to search can also be entered on the command line.
+
+So then, how do you use modules?  There are three syntactic forms: "import", "use", and "module".  Module defines a module; if many files define the same module, they will by default be combined into one big module when compiled.  Use tells the compiler that you want to use the module.  So:
+
+define Foo;
+
+f1 a int, b char : bool = ...
+f2 a char, b int : bool = ...
+
+// Different file...
+use Foo;
+
+bar =
+   Foo::f1, 10, 'b';
+   if Foo::f2, 30, 'c' then
+      ...
+   ;;
+   ...
+;;
+
+As you see, once you use a package, you can access the functions in it through the form "Packagename::functionname".  Note to C++ programmers: these are not method calls!
+
+Import tells the compiler to take all the module's symbols and stick them into the local namespace.  In other words, it's just like use, except you don't have to prefix Packagename:: to every function from that package.  This can also cause name-clash though.  So:
+
+define Foo;
+
+f1 a int, b char : bool = ...
+f2 a char, b int : bool = ...
+
+// Different file...
+use Foo;
+
+bar =
+   f1, 10, 'b';             // Foo::f1
+   if f2, 30, 'c' then      // Foo::f2
+      ...
+   ;;
+   ..
+;;
+
+// Compiler error!  f1 is already defined!
+f1 ushort =
+   ...
+;;
+
+
+
+COMPILATION NOTES
+
+Song programs SHOULD optimize tail-recursion into a loop.
+
+Symbol stuff:
+The symbol, by which I mean the real name of a function that the linker and compiler really care about, works thus:  Packagename_funcname.  If it is defined as part of a protocol, then it works thus:  Packagename_funcname_classname_protocolname (XXX: ???).  Underscores are escaped; foo_bar becomes Packagename_foo__bar.
+
+
+
+
+
+ GARBAGE COLLECTION AND MEMORY MANAGEMENT
+"new" invokes the "_new" function which allocates a new chunk of garbage-collected memory.  "alloc" invokes "_alloc", which returns non-garbage collected memory.  When you're done with a structure, free it thus:
+free f;
+This should have NO EFFECT on structures in garbage-collected memory.
+Note: Unless you're writing an operating system or memory manager or some other very low-level system, don't bother using alloc.  It's only there because sometimes you really do need it.
+
+There is a third constructor, "static".  This allocates space for an object without running an allocator.  This means it's allocated on the stack if it's a local variable, or in the program's data segment if it's a global.  Constants are all static by definition, no matter what type of constructor you use.  Like "alloc", this is provided because it is sometimes necessary, not because I like it.  Note that it is a COMPILE TIME ERROR to return a static value!  Given how well garbage collectors work, I would NOT advise bothering with this one much, except possibly for global values.
+
+Things you can't use if you're writing GC-free code:
+new
+closures
+exceptions
+
+
+FUTURE ISSUES
+Default values and/or keywords for functions.
+Better inheritance/default definitions/super access for protocols.
+Set/symbol/enum types
+Asm interface
+Extern C declerations
+Static contagion --explain
+Object system still could be more satisfactory... or rather, type system.
+  Combined types, a la @a list, still aren't too well defined.

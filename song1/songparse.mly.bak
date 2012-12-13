@@ -1,0 +1,590 @@
+%{
+(* songparse.mly
+   A parser for Song.
+   Yay.
+
+   Simon Heath
+   18/2/2004
+*)
+
+
+
+%}
+
+
+%token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE
+%token COLON COMMA PERIOD HASH AT
+%token TRY RAISE WITH FINALLY
+%token BREAK RET CONTINUE TYPE STRUCT
+%token IF ELIF ELSE CASE DEFAULT GOTO FOR FROM TO BY WHILE PASS
+%token NULL NONE ASM INDENT DEDENT ENDLN
+%token USE IMPORT PACKAGE EXPORT
+%token <string> STRING ID
+%token <char> CHAR
+%token <Int64.t> INT
+/* We dun need 32 or 64 bit floats here 'cause nobody's going to WRITE one.
+   I hope. */
+%token <float> FLOAT
+%token ASSIGN ASSIGNADD ASSIGNSUB ASSIGNMUL ASSIGNDIV ASSIGNMOD ASSIGNAND
+%token ASSIGNOR ASSIGNXOR SWAP
+%token EQ GT LT GTE LTE NEQ SEQ SNEQ
+%token AND OR XOR NOT BAND BOR BXOR BNOT
+%token PTR ADD SUB MUL DIV MOD INC DEC
+%token SHL SHR
+%token CLASS METHOD METHODCALL SELF SUPER
+
+%token UINT8 INT8
+%token UINT16 INT16
+%token UINT32 INT32 WORD
+%token UINT64 INT64
+%token FLOAT32 FLOAT64
+%token FUNC
+
+/* Prescedence and associativity... later is higher prescedence */
+%left     ASSIGN ASSIGNADD ASSIGNSUB ASSIGNMUL ASSIGNDIV ASSIGNMOD ASSIGNAND ASSIGNOR ASSIGNXOR SWAP
+%nonassoc EQ GT LT GTE LTE NEQ SEQ SNEQ
+%nonassoc AND OR XOR
+%right    NOT
+%nonassoc SHL SHR
+%nonassoc BAND BOR BXOR
+%right    BNOT
+%right    PTR
+%nonassoc ADD SUB
+%nonassoc MUL DIV MOD
+%right    INC DEC
+
+
+%type <unit> main
+%start main
+
+%%
+main: 
+	  stms
+	  	{}
+	;
+
+arraydec:	
+	  LBRACK typedec RBRACK
+		{}
+	;
+
+ptrdec:
+	  PTR typedec
+	  	{}
+	;
+
+typedec:
+	  UINT8
+	  	{}
+	| INT8
+		{ }
+	| UINT16
+		{ }
+	| INT16
+		{ }
+	| UINT32
+		{ }
+	| INT32
+		{ }
+	| UINT64
+		{ }
+	| INT64
+		{ }
+	| FLOAT32
+		{ }
+	| FLOAT64
+		{ }
+	| NONE 
+		{ }
+	| STRING
+		{ }
+	| FUNC
+		{ }
+	| arraydec
+		{ }
+	| ptrdec
+		{ }
+	| ID
+		{ }
+	;
+
+
+block:
+	INDENT stms DEDENT
+		{}
+	;
+
+adeflst:
+	  value
+	  	{}
+	| value COMMA adeflst
+		{}
+	;
+
+arraydefault:
+	  LBRACK adeflst RBRACK
+	  	{}
+	;
+
+vardec:
+	/* foo int */
+	  ID typedec
+	  	{}
+	/* foo int <- 10 */
+	| ID typedec ASSIGN expr
+		{}
+	/* foo struct@ (stack var) */
+	| ID typedec AT
+		{}
+	/* foo struct@ <- blah */
+	| ID typedec AT ASSIGN expr
+		{}
+	/* foo [int]@3 (array on stack) */
+	| ID typedec AT INT
+		{}
+	/* foo [int]@3 <- (1, 2, 3) */
+	| ID typedec AT INT ASSIGN arraydefault
+		{}
+	;
+
+eliflst:
+	  /* NOTHING */
+		{}
+	| ELIF expr COLON INDENT stms DEDENT
+		{}
+	| eliflst eliflst
+		{}
+	;
+
+ifstm:
+	  IF expr COLON block
+	  	{}
+	| IF expr COLON INDENT stms DEDENT eliflst ELSE block
+		{}
+	;
+	
+forstm:
+	  FOR stm ENDLN stm ENDLN stm COLON block
+	  	{}
+	;
+	
+fromstm:  
+	  FROM ID ASSIGN expr TO INT COLON block
+	  	{}
+	| FROM ID ASSIGN expr TO INT BY INT COLON block
+		{}
+	;
+
+whilestm:
+	  WHILE expr COLON block
+	  	{}
+	;
+
+assignstm:
+	  ID SWAP ID
+	  	{} 
+	| ID assignment expr 
+		{}
+	;
+
+trystm:
+	  TRY block WITH ID block
+	  	{} 
+	| TRY block FINALLY block 
+		{}
+	| TRY block WITH ID block FINALLY block
+		{}
+	;
+
+gotostm:
+	  GOTO ID
+	  	{}
+	;
+
+asmstm:
+	  ASM STRING exprs
+	  	{}
+	;
+
+
+casechoice:
+	  INT COLON block
+		{}
+	| CHAR COLON block
+		{}
+	| DEFAULT COLON block
+		{}
+	;
+
+casechoices:
+	  casechoice
+	  	{} 
+	| casechoice casechoices
+		{}
+	;
+
+casestm:
+	  CASE expr casechoices
+	  	{}
+	;
+
+
+value:
+	  number
+	  	{}
+	| ID
+		{}
+	| NULL
+		{}
+	| STRING
+		{}
+	;
+
+retstm:
+	  RET
+	  	{}
+	| RET expr
+		{}
+	;
+
+gotolabel:
+	  ID HASH
+	  	{}
+	;
+
+structref:
+	  ID PERIOD expr
+	  	{}
+	| ID PERIOD structref
+		{}
+	;
+
+arrayref:
+	  expr PERIOD expr
+	  	{}
+	;
+
+ptrref:
+	  PTR expr
+	  	{}
+	;
+addrref:
+	  AND expr
+	  	{}
+	;
+
+assignment:
+	  ASSIGN
+	  	{}
+	| ASSIGNADD 
+		{}
+	| ASSIGNSUB
+		{}
+	| ASSIGNMUL
+		{}
+	| ASSIGNDIV
+		{}
+	| ASSIGNMOD
+		{}
+	| ASSIGNAND
+		{}
+	| ASSIGNOR
+		{}
+	| ASSIGNXOR
+		{}
+	;
+
+raisestm:
+	  RAISE ID
+	  	{}
+	;
+
+stm:
+	  exprs
+		{}
+	| vardec
+		{}
+	| ifstm
+		{}
+	| INC ID
+		{}
+	| DEC ID
+		{}
+	| forstm
+		{}
+	| whilestm
+		{}
+	| assignstm
+		{}
+	| trystm
+		{}
+	| gotostm
+		{}
+	| asmstm
+		{}
+	| casestm
+		{}
+	| fromstm
+		{}
+	| retstm
+		{}
+	| gotolabel
+		{}
+	| raisestm
+		{}
+	;
+
+stms:
+	  stm
+		{}
+	| stm ENDLN stms
+		{}
+	;
+
+cast:
+	  LBRACE typedec RBRACE expr
+	  	{}
+	;
+
+
+
+expr:
+	  value
+	  	{}
+	| cast
+		{}
+	| funcall
+		{}
+	| structref 
+		{}
+	| arrayref
+		{}
+	| ptrref
+		{}
+	| arith
+		{}
+	| logic
+		{}
+	| binlogic
+		{}
+	| methodcall
+		{}
+	| addrref
+		{}
+	| LPAREN expr RPAREN
+		{}
+	;
+
+exprs:
+	  expr
+		{}
+	| expr ENDLN expr
+		{}
+	;
+
+argitem:
+	  expr
+	  	{}
+	| ID COLON expr
+		{}
+	;
+arglst:
+	  argitem
+	  	{}
+	| argitem COMMA argitem
+		{} 
+	;
+
+funcall:
+	  ID LPAREN arglst RPAREN
+	  	{}
+	| ID RBRACE typedec LBRACE RPAREN arglst LPAREN 
+		{}
+	;
+
+argdeclitem:
+	  ID typedec
+	  	{}
+	| ID COLON value typedec
+		{}
+	| ID COLON LBRACK RBRACK typedec
+		{}
+	;
+
+argdecl:
+	  argdeclitem
+	  	{}
+	| argdeclitem COMMA argdeclitem
+		{}
+	;
+
+fundef:
+	  ID COLON block
+		{}  
+	| ID LPAREN argdecl RPAREN COLON block
+		{}
+	| ID LPAREN argdecl RPAREN typedec COLON block
+		{}
+	| ID typedec COLON block
+		{}
+	| ID RBRACE typedec LBRACE LPAREN argdecl RPAREN COLON block
+		{}
+	| ID RBRACE typedec LBRACE LPAREN argdecl RPAREN typedec COLON block
+		{}
+	;
+
+
+number:
+	  INT
+	  	{}
+	| FLOAT
+		{}
+	| CHAR
+		{}
+	;
+
+arith:
+	  expr ADD expr
+	  	{}
+	| expr SUB expr
+		{}
+	| expr DIV expr
+		{}
+	| expr MUL expr
+		{}
+	| expr MOD expr
+		{}
+	;
+	
+logic:
+	  expr AND expr
+	  	{}
+	| expr OR expr
+		{}
+	| expr XOR expr
+		{}
+	| NOT expr
+		{}
+	| expr EQ expr
+		{}
+	| expr SEQ expr
+		{}
+	| expr NEQ expr
+		{}
+	| expr SNEQ expr
+		{}
+	;
+	
+/* Remember shl and shr! */
+binlogic:
+	  expr BAND expr
+		{} 
+	| expr BOR expr
+		{}
+	| expr BXOR expr
+		{}
+	| BNOT expr
+		{}
+	| expr SHL expr
+		{}
+	| expr SHR expr
+		{}
+	;
+
+
+importdecl:
+	  IMPORT ID
+	  	{}
+	;
+	
+usedecl:
+	  USE ID
+	  	{}
+	;
+	
+exportlst:
+	  ID
+		{} 
+	| ID COMMA exportlst
+		{}
+	;
+
+exportdecl:
+	  EXPORT exportlst
+	  	{}
+	;
+
+typedecl:
+	  TYPE ID typedec
+	  	{}
+	;
+
+structitems:
+	  ID typedec ENDLN
+	  	{}
+	| ID typedec ENDLN structitems
+		{}
+	;
+
+structdecl:
+	  STRUCT ID COLON INDENT structitems DEDENT
+	  	{}
+	;
+	
+
+classmember:
+	  vardec
+	  	{}
+	| methoddec
+		{}
+	;
+
+classmembers:
+	  classmember
+	  	{}
+	| classmember ENDLN classmembers
+		{}
+	;
+
+classdec:
+	  CLASS ID COLON INDENT classmembers DEDENT
+	  	{}
+	| CLASS ID LPAREN ID RPAREN COLON INDENT classmembers DEDENT
+		{}
+	;
+
+methoddec:
+	  METHOD fundef
+	  	{}
+	;
+	
+methodcall:
+	  ID METHODCALL funcall
+	  	{}
+	;
+
+
+dec:
+	  classdec
+	  	{}
+	| fundef
+		{}
+	| importdecl
+		{}
+	| usedecl
+		{}
+	| exportdecl
+		{}
+	| typedecl
+		{}
+	| structdecl
+		{}
+	;
+decs:
+	  dec
+		{}
+	| dec ENDLN decs
+		{}
+	;
+
+%%

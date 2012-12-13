@@ -1,0 +1,131 @@
+
+program ::= moduledecl decl* | decl* 
+
+decl ::= importdecl | usedecl | globaldecl | constdecl | protocoldecl | classdecl 
+       | fundecl | typedecl | versiondecl | exportdecl
+
+moduledecl ::= MODULE ID ENDSTM
+
+importdecl ::= IMPORT ID ENDSTM
+
+usedecl ::= USE ID ENDSTM
+
+versiondecl ::= VERSIONDEF ID ENDSTM
+
+exportdecl ::= EXPORT ID ("," ID)* ENDSTM
+
+protocoldecl ::= PROTOCOL [typename ("," typename)*] ID ["(" ID ")"] "=" (funheader ENDSTM)* END
+
+classdecl ::= CLASS [ID PKGREF] ID ":" ID "=" fundecl* END
+
+typename ::= INT8 | UINT8 | ... | FLOAT64 | BYTE | UBYTE | ... | DOUBLE | CHAR | STRING | NONE | FUNC | "[" typename "]" | "^" typename | "@" id | id | "@" id typename
+
+value ::= INTEGER | FLOAT | CHAR | STRING | arrayliteral | ID | ID PKGREF ID
+
+arrayliteral ::= "{" value ["," value]* "}"
+
+globaldecl ::= GLOBAL ID typename ["<-" value] ENDSTM
+
+constdecl ::= CONST ID typename "<-" value ENDSTM
+
+typedecl ::= TYPE ID "=" (typename ENDSTM | structdecl)
+
+structdecl ::= STRUCT (ID typename ["<-" expr] ENDSTM)* END
+
+fundecl ::= funheader "=" stm* END
+
+paramlst ::= ID typename ["," ID typename]*
+
+funheader ::= ID [paramlst] ["," ID ELLIPSIS] [":" typename]
+
+stm ::= ifstm | whilestm | forstm | fromstm | trystm | gotolabel | gotostm |
+versionstm | varstm | fundecl | asmstm | freestm | assignstm | retstm | expr
+ENDSTM
+
+ifstm ::= IF expr THEN stm* [ELIF expr THEN stm*] [ELSE stm*] END
+
+whilestm ::= WHILE expr DO stm* END
+
+forstm ::= FOR vardecl "," expr "," expr DO stm* END
+
+fromstm ::= FROM id "<-" INTEGER TO INTEGER [BY INTEGER] DO stm* END
+
+trystm ::= TRY stm* [WITH ID typename DO stm*] [FINALLY stm*] END
+
+gotolabel ::= LABEL ID ENDSTM
+
+gotostm ::= GOTO ID ENDSTM
+
+versionstm ::= VERSION ID DO stm* END
+
+varstm ::= ID varname ("," ID varname)* ["<-" (expr | allocexpr)] ENDSTM
+
+allocexpr ::= (NEW | ALLOC | STATIC) varname "(" [expr] ")"
+
+freestm ::= FREE ID ENDSTM
+
+asmstm ::= ASM STRING ENDSTM
+
+lval ::= PTR expr | arrayexpr | structexpr | ID
+
+assignstm ::= lval ["," lval] assignop expr ["," expr] ENDSTM
+
+assignop ::= ASSIGN | ASSIGNADD | ...
+
+retstm ::= RET expr ("," expr)* 
+
+breakstm ::= BREAK ENDSTM
+
+continuestm ::= CONTINUE ENDSTM
+
+expr ::= "(" exprOp (expr)* ")" | coerceexpr | sizeofexpr | arrayexpr
+| structexpr | postfixexpr | value | constructexpr
+
+exprOp ::= ADD | SUB | MUL | DIV | MOD | AND | OR | XOR | NOT | BAND | BOR | BXOR | BNOT | BCOMP | EQ | NEQ | SEQ | SNEQ | GT | LT | GTE | LTE | INC | DEC | ID | ID PKGREF ID
+
+coerceexpr ::= "{" typename "}" expr
+
+sizeofexpr ::= "(" SIZEOF typename ")" | "(" SIZEOF expr ")"
+
+prefixexpr ::= PTR expr | BAND expr
+
+arrayexpr ::= "[" expr "]" expr
+
+structexpr ::= "." expr "." ID
+
+
+
+
+
+
+
+
+
+
+
+ISSUES:
+export/hide lists??
+
+Switches to disable optimization, inlining, and bounds-checking.
+
+2-address intermediate code (op, src, dst)
+
+Interface file contains functions, globals, consts, types, imports/uses, module name
+
+You can NOT declare a var name after it's used!
+
+Static constructors are contagious!  Ex:
+---
+f a <- static a();
+g b <- new b();
+b.foo <- f;    // g is now static and cannot be returned!
+---
+
+Extern C declerations --through asm for now.
+
+Inlining library functions
+
+Symbol and set types.
+
+Switch statement?
+

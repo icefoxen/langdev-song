@@ -1,0 +1,12 @@
+Note that the semantic checking of .sgi files is not as strong as it could be.
+Generally, one should NEVER hand-edit these files, since typos and illegal
+statements could cause Interesting things to happen.  The compiler should
+create them right, and you should leave them alone.
+
+Things I need to improve are:
+Conditional compilation
+
+Things I need to implement are:
+Unions/variant types
+Parametric polymorphism
+Object-oriented programming (a la Obj-C)

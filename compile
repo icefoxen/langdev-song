@@ -1,0 +1,9 @@
+#!/bin/sh
+
+FILES="util.ml errorReport.ml syntree.ml songparse.mli songparse.ml songlex.ml \
+semant.mli symtable.ml typecheck.ml songc.ml"
+
+ocamlyacc -v *.mly
+ocamllex *.mll
+
+ocamlc.opt -c $FILES

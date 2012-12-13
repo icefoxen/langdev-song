@@ -1,0 +1,117 @@
+Song doesn't necessarily need to be nice or simple or unified or safe.  It is
+a systems language.  It just needs to be ruthlessly powerful.
+
+Floats in the compiler are 63 bits.  If you write out a float longer than
+that, the compiler will choke on it and the results are Unspecified with a capital Un.  Since a 63-bit float can probably happily represent a googol or three, if you have this problem I'd be quite fascinated to hear about it.  Compiled code uses floats of the correct size (ie 32 or 64 bits).
+
+The internal string encoding for Song should all be UTF-8, and the library
+functions should reflect this.  However, it isn't, and they don't, yet.  And I'll probably put it off forever unless I have reason to do otherwise, so if you need it, please bug me about it rather than blindly waiting for another version.
+
+There are no assign-and-shift statements (ie <-<< and <->>) 'cause that's just too many damn arrows.  Requests may alter this.
+
+Arrays are big, slow, and safe.  Pointers are small, fast and dangerous.
+
+There are no enumerated types or unions.  If people say this is a bad idea,
+I'll reconsider.
+
+An object instance is just a structure.  All the method calls and such are
+figured out at compile-time; methods are just functions that take an object.
+I haven't decided how they're going to be mangled yet.
+
+The = operator does STRUCTURAL EQUALITY.  That means that a) it's automatically false if both args aren't the same type, and b) if they are it recurses through the whole structure checking for equality.  This is SLOW.
+
+WHY?
+Because C is ugly, irritating, dangerous, and messy.  I hope Song proves to be
+less of all of these.  And before you start, Java is impractical, C++ solves
+none of C's problems and adds a lot more, Common Lisp can't be compiled or
+used for low-level programming, Objective C is good but not good enough (quite),
+Objective Caml lacks low-level features and some numerical power, Forth doesn't
+have enough modularity and safety, Pascal and Modula-N aren't powerful/
+flexible enough, and Ada and Eiffel are too inflexible and generally irritating.
+Other languages such as Lisp, Smalltalk, Perl/Python/Ruby, Lua, and Pop-11 don't even try to be low-level systems languages, so they don't even come into the issue.
+There.  If I've failed to piss anyone off, please let me know.
+
+
+THE PROBLEM OF TYPES:
+You page, "I need a hacker to bounce ideas off of..." to NightEyes.
+NightEyes pages, "Sure. What's up?" to you.
+MEETME: NightEyes would like to join you. Please respond with
+MEETME: "msummon NightEyes" or "meet NightEyes" to bring them here,
+MEETME: or "mdecline NightEyes" turn down the request.
+NightEyes has arrived.
+<OOC> You say, "Well, I'm designing a programming language and need some advice on how I'm going to do things."
+NightEyes goes [OOC] Out-of-character.
+Icefox goes [OOC] Out-of-character.
+<OOC> NightEyes purrs, "OK. I can't guarantee I have all the right answers, but I can tell you what's wrong. I have the Intercal manual saved somewhere."
+Icefox laughs.  "Don't worry, it won't come to that.  This language is designed to actually be useful."
+NightEyes grins, chuckles, and waits for you to explain enough for hir advice to be useful.
+You say, "Besides, everyone knows that Malborge is the language of the discerning masochist.  Anyway."
+You say, "Hmm... first off, 'cause it's simple, would an enumerated type be worth the trouble?  Like in C you can write 'enum month{ January, Febuary, ... December };'.  I assume it's there for a reason, but I've never really used it."
+NightEyes purrs, "That's a question which, I think, doesn't have a single right answer. The enumerated type is supposed to let you increment and decrement as though they were numbers themselves, but the same effect comes from using raw numbers and an output routine to interpret them"
+NightEyes thinks carefully for a bit, weighing pros and cons.
+NightEyes purrs, "The biggest advantage is that you get modulo operators for free.... the biggest drawback is that it's a pain to convert from the enum type back to numbers."
+You say, "Yes; it's a matter of taste, which makes it hard.  Well, the same effect can be done with constants, and the lack of such a thing in Java doesn't seem to have stopped anyone, so I'll leave it out for now."
+NightEyes nods, then chuckles. "Feature available in IceCode 2.0."
+You say, "More along the lines of 'If enough people bug me about it I'll stick it in someday', but yes."
+NightEyes nods. "Yeah, and actually... if many of your questions are whether to add constructs or leave them out, that'd be a good general answer."
+You say, "The next issue is tricky because it's very broad: how do I compose different data types?  As in, suppose I want to make a function that can take either an int or a float; how would I do that?  In C the only way would be to use a union; in C++ you could make a class inheriting from two parents, in Java you would make it accept a "Number" or "Object" class or something that int and float would inherit from, in ML you could define a type that could be either an int or a float..."
+NightEyes flumps down on the floor, counting on hir fingers. "You do pick good questions. Hmmm...."
+You say, "I think it's basically a question of whether I want to define more general types, like C unions, or more specific types, like typical OO inheritance..."
+NightEyes purrs, "I have a crazy idea. For functions, why do you need to define the incoming data type in the first place? As in, and please try to get the sense rather than picking on my horribly munged memories of whatever-this-language-is,   "def func grokType(dataOne, dataTwo) " and let the programmer decide what he's going to pass to it"
+NightEyes purrs, "... and within the function, define dataOne and dataTwo local variables"
+NightEyes thinks, . o O (Either he's writing down this idea for posterity, typing an eloquent and detailed response, or laughing his head off at the absurdity. I'm not betting on the first.)
+Icefox chuckles.  "It's been done, and I've considered just such a scheme for other languages.  It does make some things simpler, but certain others more complex, and you usually have to end up checking what dataOne and dataTwo are at runtime.  The current language I'm writing is made for low-level junk, speed, and safety, so I want compile-time typechecking.
+Icefox hopes he did the second...
+NightEyes purrs, "Well, you're not laughing your head off, and you didn't praise it to high heaven, so it was the second. ;)"
+NightEyes purrs, "Ah, knowing that will make some decisions easier"
+You say, "Well, I suppose that if I don't decide on anything else I can hack in a simple object system, which is at least a proven concept.  But before I follow the tried-and-true path I want to look around and see if there's anything better or more interesting."
+NightEyes purrs, "True. What combinations are you likely to get that would need to be composed, anyway?"
+NightEyes purrs, "Int and float, you mentioned... I can't see merging strings with much else, or pointers."
+You say, "Structures.  As in, say you're writing an Asteroids game.  You want your drawing routine to accept structures of type PlayerShip, EnemyShip, Rock, and Powerup."
+You say, "That's why OO programming is cool for games, it gives a rather nice way to do that.  But it might be nicer if you could write "type GameObject = PlayerShip | EnemyShip | Rock | Powerup" or something...  But then that raises other issues."
+NightEyes purrs, "Ah. Good point, I was thinking on too simple a scale."
+Icefox grins.  "Well these are aspects of it I've run over personally a few times recently, so."
+NightEyes purrs, "Seems to me there are several good ways. I'd probably have some sort of merge-type that you could define or include in the header... *pauses, reviewing his idea and your last coding comment* Actually, what issues does your GameObject raise, if it's included in the program header?"
+You say, "Ummm... for one, the pattern-matching to figure out what /kind/ of GameObject it is turns out tricky, and there's the question of whether a variable of one type of GameObject can be assigned another type GameObject (and how to keep track of such things, though a simple index in the structure may be sufficient)..."
+You say, "Also, it may turn out that every time you refer to such an object you have to check which kind of object it is at the moment, which may make things slow since I don't think the compiler would necessarily be able to figure it out.  Nothing insurmountable, but it's enough to make me hesitate."
+NightEyes drops hir head forward into hir hands. "Mrf. now I see what you're going through. I never looked at all those angles. And a limited superclass (e.g. you can't assign a value to a GameObject) won't work for about half the same reasons, and an equal number of new ones."
+Icefox grins.  "Yeah.  Fun problem, ne?"
+NightEyes purrs, "I think you should use the Godel excuse on that one."
+You say, "Godel excuse?  What's that?"
+NightEyes purrs, "Kurt Godel came up with a pretty ingenious Incompleteness Proof that basically states, in mathematics, there will always be statements you cannot prove. In other words, you can't know enough to prove which is the right, or best, solution. Pick one that works."
+Icefox laughs.  "That's a pretty handy tool."
+You say, "I think that for now I'll just go for the simple object-system.  But it was sure fun playing with.  ^_^"
+NightEyes chortles softly. "Playing with 'em is more than half the fun."
+Icefox grins.  "Exactly."
+You say, "Okay, now comes the hard part....  figuring out what symbols are still left that I can use for the object system..."
+NightEyes suddenly rocks back, laughing. "Designing a programming language is, basically, the art of making it as hard as possible for the programmer to screw up as badly as you know he wants to!"
+You say, "Nah; I'm assuming the programmer knows what s/he's doing.  Dangerous, I know, but at the moment I'm more worried about making it as hard as possible for the COMPILER to screw up as badly as it wants too..."
+s/dangerous/foolhardy, futile, and quite possibly insane/
+NightEyes continues laughing, wiping hir eyes. "Okay, okay, point made... how many symbols will you need for your system, anyway?"
+You say, "Um...  I think I still have ?, `, and | unused..."
+You say, "I suppose I can just do it class::method to placate the great raving hordes of C++'ers."
+NightEyes continues giggling as shi looks up an old reference. "Here, click, I think you may be writing a new Berkeley Quality Language: http://info.astrian.net/jargon/terms/b/Berkeley_Quality_Software.html
+Icefox clickities
+NightEyes loves the Jargon File
+You say, "Hey!  I resent that!  I'm going to document it... someday..."
+NightEyes purrs, "And it hasn't core dumped yet, has it? :P"
+You say, "Of course not!  It hasn't even compiled yet."
+NightEyes starts pounding hir feet on the floor as shi laughs. "ExactlY!!"
+Icefox hmph's.  "Hey, I don't need it to be nice or clean or logical.  I just need it to be ruthlessly powerful."
+NightEyes hugs you. "Sorry, I just couldn't help feeling the reference there. Seriously, Godel will be your friend at times.
+Icefox grins and hugs back.  "That's okay; thanks.  And in reven... erm, repayment, you can help me beta-test it."
+NightEyes purrs, "Oooh, you're porting it to the Mac already? :P"
+You say, "Well... um, actually, no.  I don't know Mac assembly language."
+NightEyes hugs again. "It's okay. Nobody writes for Macs unless they grew up on 'em, anyway. I was teasing, and you should know that by now."
+Icefox writes that down on his list of things to do, right after "Take over the world" and "Finish homework"
+NightEyes has gone through an idea, in the meantime, and rejected it as too wasteful.
+and too unreliable, unpredictable, etc, etc.
+You say, "Oh?  Tell anyway."
+NightEyes purrs, "Write the code for both ways of handling the object problem, or even all the different ways you want to consider, then decide which one you'll keep. :P"
+NightEyes observes that the "all the different ways" put it waaaay out of realism's grasp.
+You say, "Ummm.... yeah.  I hope you don't mind if I decide which one I want to keep, think about it for a while, then write the code for it..."
+NightEyes purrs, "Hey, didn't I already say I rejected my idea? I don't think I could have respected you as a coder if you'd seriously considered it."
+You say, "It's only 1:48 am.  I wouldn't seriously consider it for at least two hours."
+NightEyes purrs, "By which time I expect to be incapable of considering it, period. Sorry about nodding off just now."
+You say, "No worries; I have to be going to bed now anyway."
+Icefox hugs.  "Thanks a lot, though!  'Tis been fun."

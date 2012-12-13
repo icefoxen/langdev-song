@@ -1,0 +1,2 @@
+Fix func vars so you can give them an explicit type.
+Make a lambda while you're at it.

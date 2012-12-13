@@ -1,0 +1,10 @@
+#!/bin/sh
+rm -rf *~
+rm -rf *.cmo
+rm -rf *.cmi
+rm -rf *.o
+rm -rf songparse.ml songparse.mli songlex.ml songparse.output
+rm -rf a.out songc
+rm -rf *.pp
+rm -rf *.sgi
+#rm -rf *.mli

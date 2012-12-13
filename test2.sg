@@ -1,0 +1,81 @@
+module foo;
+
+import baz;
+export bop;
+export quux, buux;
+
+def Fop;
+def Feep;
+
+const bar int <- 10;
+
+global bop str <- "20";
+
+type foo = ^[int];
+
+struct bar =
+   a int <- 0;
+   b char <- 'a';
+;;
+
+// Comment!
+foo a int, b char, d NONE : short = 
+
+   {- Local function -}
+   baz : str =  
+      ret "BAZ!"; 
+   end
+   (baz);
+
+   beep [int] <- {!10, foo, 30!};
+
+   bop; 
+   (+ 10 20); 
+   a int <- 10;
+   b <-+ 20;
+   d <- {char} (+ (* 91 19) 54);
+   ^e <- new int( 10 );
+   10;
+
+   for i int <- 0; (< i 10); (inc i) do
+      (print "Hello world!\n");
+   end
+
+   foo::bop;
+   
+   if 10 then 20; 
+   elif 30 then 40; 
+   elif 50 then 60; 
+   else 70; 
+   end
+   
+   if 10 then 20; 
+   else 30; 
+   end
+
+
+   [foo 1];
+   [foo 1,2];
+   
+   .bar.h;
+   .bar.h.g.f;
+   
+
+   a, b <- 10, 20;
+   a int, b char <- (foobar 10 'c'), "b";
+;;
+
+foobar a int, b char : int, char =
+   #GOTOLABEL;
+   version Fop do
+      goto GOTOLABEL;
+   ;;
+   version Feep do
+      ret b, a;
+   ;;
+   ret a, b;
+;;
+
+
+{- Empty function -}
+bop a int, b char = ;;

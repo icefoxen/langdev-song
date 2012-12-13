@@ -1,0 +1,62 @@
+COMPILATION:
+Each symbol needs: type, name, addr, size, scope#
+Possible types are: struct, array, pointer, function, polymorphic and fundamental
+
+Tables:
+Symbol table, type/structure/union table, class table, member table (for structs, unions, and classes).
+
+Symbol table:
+Either a hashtable with a scope-stack of each symbol pushed onto it in a scope, or a stack of binary trees or skip-lists.  Trying the skip-lists may be fun anyway.  
+
+Regardless, you need an openscope() and closescope()
+
+"None" is not a valid variable type.  Only ^None makes sense.
+
+Really, the only valid operations on parameterized types are assignment, address references, equality (though if = is used instead of ==, it must be with another value of the same type) and function calls to other parameterized funcs.  Binary logic is also allowed, though it is generally not very useful.  Mathematics, logic, most function calls, etc are forbidden.
+example:
+foo {T}( a T, b int ):
+   x T <- a
+   y [T]@10
+   from i <- 0 to y.len:
+      y.i <- a
+   bop{T}( y, b )  $ Presumably bop is of type bop{N}( a [N], b int )
+   z ^T <- &a
+   if ^z == a:
+      println( "Bop!" )
+   if x = y.0:
+      println( "Quux!" )
+
+
+
+CODE GEN:
+New variables are checked to make sure they aren't used before they're assigned.
+
+Tree- or skiplist-malloc?  Ah well, leave it for now.
+
+Constants are translated into literal numbers IF AND ONLY IF they are not exported.
+
+Nested functions?
+
+Tail recursion is optimized!  If the function ends with a "callSelf()" or "ret callSelf()", it compiles into "move args to my own args and jump to me".
+
+Arrays are really structures with a 4-byte index and a C-ish array.  They are bounds-checked with each assignment to and from.  Strings are arrays.
+
+Packages: If you want to know why leading _'s aren't valid symbol names, here's why.  If function foo() is in the package Bar, then it's symbol is compiled as Bar__foo.  
+
+OO: More underscorey goodness.  If method Bop::foo() is in the package Bar, then it's symbol is compiled to Bar__Bop_foo.
+Objects are just records that get passed to methods before all the other args; quite simple, really.  
+
+logical and & or must be short-circuit eval!
+
+Generic types are internally represented as pointers/references for types larger than 4 bytes, or direct representation for types smaller than 4 bytes.  So "struct foo: int16 a; int16 b" would be represented directly, as would ints, chars and pointers.  Arrays, larger structures, classes, and so on are references.
+
+ACTUALLY...  I COULD just use an underscore as a seperator for packages and objects and such, and then use a double-underscore __ to escape underscores in names!!  That might be MUCH simpler.  Yesh.
+So Bop:Bar::foo_baz() would be Bop_Bar_foo__baz
+
+Try to do a bit of smart implicit inlining.  Have a compiler switch that sets the inline level; at certain levels, functions with fewer than a certain number of statements are inlined.
+
+Definition and object files are combined?  As in, you have the definition, some fence (%%% works), then the raw object file.  The linker frontend just dikes the object out and links THAT.
+*Main con: readability.  I suppose complexity also.
+*Main pros: Interfaces don't get seperated from objects and get lost, ensures versioning for compiler versions and platforms.  No Header Hell.
+A browser program wouldn't be too hard to cook up, which isn't bad.
+What to call the files?  .so won't work.  .sco (Song compiled object) isn't much better, considering current events.  .sox or .soi or sio is best, I suppose.

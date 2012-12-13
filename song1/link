@@ -1,0 +1,5 @@
+#!/bin/sh
+
+FILES="errorReport.cmo util.cmo songparse.cmo songlex.cmo lextest.cmo"
+
+ocamlc -o songc $FILES

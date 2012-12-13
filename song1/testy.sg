@@ -1,0 +1,43 @@
+main ( s [string] ) int: 
+   'a'
+   'b'
+   '\t'
+   '\r'
+   '\0x91'
+   '\0b11001'
+   '\0o71'
+   '\n'
+   '0'
+
+   '\\'
+   '\''                   $ Does this work right?  Maybe.
+   "foo\tbar\t\\bop"      $ What about this?
+   a int
+   b int <- 10
+   c foo@
+   d foo@ <- c
+   e [char]@64
+      $ hrmm.
+             $very hrm.
+        
+   
+   if foo:
+      bar
+
+foo() char: 
+   if beep:
+      ret bop 
+   else:
+      ret bip
+   
+
+beep(): 
+   bleh 
+   $ Yay, it works?
+   {- I think it works at least.  W00t! -}
+   while true:
+      if boo:
+         bah
+      else:
+         beh
+      bop 
