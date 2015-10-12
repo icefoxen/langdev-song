@@ -3,4 +3,4 @@
 FILES="errorReport.cmo util.cmo syntree.cmo songparse.cmo songlex.cmo \
 symtable.cmo typecheck.cmo songc.cmo"
 
-ocamlc.opt -o songc str.cma $FILES
+ocamlc -o songc str.cma $FILES

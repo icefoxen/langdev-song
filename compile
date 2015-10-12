@@ -6,4 +6,4 @@ semant.mli symtable.ml typecheck.ml songc.ml"
 ocamlyacc -v *.mly
 ocamllex *.mll
 
-ocamlc.opt -c $FILES
+ocamlc -c $FILES
